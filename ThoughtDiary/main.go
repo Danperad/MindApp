@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"log"
@@ -23,12 +24,12 @@ func main() {
 		}
 	}()
 	port := os.Getenv("SERVER_PORT")
-	if len(port) == 0 {
+	if port == "" {
 		port = "8080"
 	}
 	router := mux.NewRouter()
 	router.StrictSlash(true)
-	server := connection.CreateServer()
-	router.HandleFunc("/diary/", server.getAllUserNotes).Methods("GET")
-	http.Handle("/", router)
+	router.HandleFunc("/diary/", connection.getAllUserNotes).Methods("GET")
+	log.Printf("Listen on :%v\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
 }

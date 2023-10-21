@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -12,16 +12,20 @@ import (
 )
 
 type Connection struct {
-	client     *mongo.Client
-	collection *mongo.Collection
-	ctx        context.Context
-	cancel     context.CancelFunc
+	client  *mongo.Client
+	ctx     context.Context
+	cancel  context.CancelFunc
+	signKey []byte
 }
 
 func connectMongoDb() (*Connection, error) {
 	serverUrl := os.Getenv("MONGO_URL")
 	if serverUrl == "" {
-		return nil, errors.New("MONGO_URL environment does not set")
+		return nil, fmt.Errorf("MONGO_URL environment does not set")
+	}
+	signKey := os.Getenv("SIGN_KEY")
+	if signKey == "" {
+		return nil, fmt.Errorf("SIGN_KEY environment does not set")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	log.Println("Try connect to mongodb database")
@@ -42,7 +46,6 @@ func connectMongoDb() (*Connection, error) {
 		return nil, err
 	}
 	log.Println("Connection successful")
-	collection := client.Database("thought_diary").Collection("notes")
-	connect := Connection{cancel: cancel, ctx: ctx, client: client, collection: collection}
+	connect := Connection{cancel: cancel, ctx: ctx, client: client, signKey: []byte(signKey)}
 	return &connect, nil
 }
